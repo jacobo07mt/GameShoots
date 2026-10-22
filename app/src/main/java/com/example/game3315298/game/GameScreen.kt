@@ -1,6 +1,6 @@
 package com.example.game3315298.game
 
-import android.R.attr.padding
+
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -16,42 +16,84 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.layout.onSizeChanged
+import java.nio.file.Files.size
+import kotlin.io.path.Path
+import kotlin.io.path.moveTo
 
 @Composable
-fun GameScreen (){
-    var gameStarted by remember { mutableStateOf(value = false) }
-    Box(modifier= Modifier.fillMaxSize()) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
+fun GameScreen(){
+    var gameStarted by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        var playerX by remember { mutableStateOf(0f) }
+        var playerY by remember { mutableStateOf(0f) }
+        var playerInitialized by remember { mutableStateOf(false) }
+        var screenWidth by remember { mutableStateOf(0f)}
+        Canvas(modifier = Modifier.fillMaxSize()
+            .onSizeChanged{ size->
+                screenWidth = size.width.toFloat()
+                if (!playerInitialized){
+                    playerX= size.width / 2f
+                    playerY = size.height - 120f
+                    playerInitialized = true
+                }
+            }
+            .pointerInput(Unit){detectDragGestures (
+                onDrag = { change, dragAmount ->
+                    change.consume()
+                    val shipWidth = 80f
+                    /*val dragX = dragAmount.x*/
+                    playerX =( playerX + dragAmount.x)
+                        .coerceIn(shipWidth/2
+                           , screenWidth - shipWidth/2 )
+                }
+            )}) {
             drawRect(color = Color.Black)
+
+            /*val player = Player(
+            x = size.width / 2,
+            y = size.height - 100f
+        )*/
+            val shipWidth = 80f
+            val shipHeight = 80f
+            //val playerX = size.width / 2
+            //val playerY = size.height - 120f
+            val left = playerX - shipWidth / 2
+            val top = playerY - shipHeight / 2
+            val right = playerX + shipWidth / 2
+            val bottom = playerY + shipHeight / 2
+            val shipPath = Path().apply {
+                moveTo(playerX, top)
+                lineTo( left, bottom)
+                lineTo(playerX, bottom -15f)
+                lineTo(right, bottom)
+                close()
+            }
+            drawPath(shipPath, color = Color.White)
         }
         Column(modifier = Modifier.fillMaxSize()
-                .padding(top = 100.dp),
+            .padding(top = 100.dp),
             horizontalAlignment = Alignment.CenterHorizontally){
-
             Text(
                 text = "SPACE SHOOTER",
                 color = Color.White,
-                fontSize = 28.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
             Button(onClick = { gameStarted = true }) {
                 Text(text = "START")
             }
-            if (gameStarted){
+            if(gameStarted){
                 Text(text = "GAME STARTED",
                     color = Color.White)
             }
-
         }
     }
-
-
-    }
-
-
-
-
+}
